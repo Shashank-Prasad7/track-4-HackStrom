@@ -122,6 +122,22 @@
 - [ ] FALLBACK banner appears if API key is invalid
 - [ ] Timestamps visible on every event
 - [ ] Active scenario button highlights while agent is running
-## H14–H16 · Demo rehearsal · Pending
+## H14–H16 · Demo rehearsal ✅
+
+### Code fixes
+- `App.tsx` — `handleClear` now resets `highlightedPort` + `activeScenarioId` alongside events; map port resets cleanly between scenario runs
+
+### Planning
+- `DEMO_SCRIPT.md` — full rewrite: pre-warm step, timestamp callout during hero moment, fallback mode Q&A answer, recovery procedures table, updated timing marks
+
+### Rehearsal checklist
+- [ ] Run all 4 scenarios back to back — observe no crashes
+- [ ] Storm: time T+button_click → first DecisionCard (target <20s)
+- [ ] Customs: verify factory halt $200K/day appears in reasoning
+- [ ] Carrier: verify differentiated decisions (vendor_switch vs hold)
+- [ ] Cascade: verify SHP009 cascade mention in DecisionCard
+- [ ] Click "What if we don't act?" on each — CounterfactualCard appears
+- [ ] Click trash to reset — map clears, log clears, port ring disappears
+- [ ] Practice the 3-minute script 3× aloud
 ## H16–H20 · Buffer + stretch · Pending
 ## H20–H24 · Lockdown · Pending
