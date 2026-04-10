@@ -108,8 +108,20 @@
 - [ ] DecisionCard: confidence bar fills, alternatives show %, counterfactual button works
 - [ ] CounterfactualCard: red panel with penalty numbers
 - [ ] `npm run build` exits 0 (no TypeScript errors)
-## H8–H10 · Counterfactual + map animations · Pending
-## H10–H14 · Frontend polish sprint · Pending
+## H10–H14 · Frontend polish sprint ✅
+
+### Frontend
+- `useAgentSocket.ts` — exposes `systemStatus` ('ok' | 'fallback'), `lastAgentRunAt` (ISO string after agent completes)
+- `App.tsx` — FALLBACK MODE amber banner when Claude API is unreachable; last agent run time (Clock icon) in header; active scenario button highlights only the running scenario
+- `LogPanel.tsx` — HH:MM:SS timestamps on every event row; pulsing sky-blue left-border + "Live" dot while agent running; Clear log button (trash icon) in header; empty state with symmetric pulse dots; ObservationCard delay hours use proj-number
+- `index.css` — proj-number bumped to 18px (projector-readable); proj-label to 13px
+
+### Smoke tests
+- [x] `npm run build` exits 0 (verified)
+- [ ] Dashboard reads clearly on projected screen at back of room
+- [ ] FALLBACK banner appears if API key is invalid
+- [ ] Timestamps visible on every event
+- [ ] Active scenario button highlights while agent is running
 ## H14–H16 · Demo rehearsal · Pending
 ## H16–H20 · Buffer + stretch · Pending
 ## H20–H24 · Lockdown · Pending
