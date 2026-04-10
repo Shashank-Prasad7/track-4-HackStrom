@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { Activity, AlertTriangle, Wifi, WifiOff, Loader2 } from 'lucide-react'
 import { useAgentSocket } from './hooks/useAgentSocket'
 import { MapView } from './components/MapView'
-import type { AgentEvent, HeartbeatEvent } from './types'
+import { LogPanel } from './components/LogPanel'
+import type { HeartbeatEvent } from './types'
 
 // ── Scenario config ───────────────────────────────────────────────────────────
 
@@ -41,206 +42,23 @@ const SCENARIO_COLORS: Record<string, string> = {
 }
 
 const SCENARIO_PORT: Record<string, string> = {
-  storm_jebel_ali:       'AEJEA',
+  storm_jebel_ali:        'AEJEA',
   customs_hold_singapore: 'SGSIN',
-  cascade_colombo:       'LKCMB',
-  carrier_capacity_drop: '',
+  cascade_colombo:        'LKCMB',
+  carrier_capacity_drop:  '',
 }
 
 // ── Status badge ──────────────────────────────────────────────────────────────
 
 function StatusBadge({ status }: { status: string }) {
-  if (status === 'connected') {
-    return (
-      <span className="flex items-center gap-1.5 text-emerald-400 text-xs">
-        <Wifi size={12} />
-        Live
-      </span>
-    )
-  }
-  if (status === 'reconnecting') {
-    return (
-      <span className="flex items-center gap-1.5 text-amber-400 text-xs">
-        <Loader2 size={12} className="animate-spin" />
-        Reconnecting…
-      </span>
-    )
-  }
-  return (
-    <span className="flex items-center gap-1.5 text-gray-500 text-xs">
-      <WifiOff size={12} />
-      Offline
-    </span>
-  )
+  if (status === 'connected')
+    return <span className="flex items-center gap-1.5 text-emerald-400 text-xs"><Wifi size={12} />Live</span>
+  if (status === 'reconnecting')
+    return <span className="flex items-center gap-1.5 text-amber-400 text-xs"><Loader2 size={12} className="animate-spin" />Reconnecting…</span>
+  return <span className="flex items-center gap-1.5 text-gray-500 text-xs"><WifiOff size={12} />Offline</span>
 }
 
-// ── Log event renderer (placeholder — full implementation in H4-H6) ────────────
-
-function EventRow({ event, onCounterfactual }: { event: AgentEvent; onCounterfactual: (id: string, hours: number) => void }) {
-  const base = 'text-xs px-3 py-2 rounded border animate-slide-in'
-
-  if (event.type === 'heartbeat') {
-    const hb = event as HeartbeatEvent
-    return (
-      <div className={`${base} border-gray-800 text-gray-500 flex items-center gap-2`}>
-        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse-slow inline-block" />
-        <span>
-          {hb.active_shipments} vessels active · {hb.at_risk_count} at risk
-          {hb.brewing_risks.length > 0 && (
-            <span className="text-amber-400 ml-2">
-              ⚠ {hb.brewing_risks[0].vessel_name} — {hb.brewing_risks[0].risk_type}
-            </span>
-          )}
-        </span>
-        <span className="ml-auto text-gray-700">{new Date(event.timestamp).toLocaleTimeString()}</span>
-      </div>
-    )
-  }
-
-  if (event.type === 'system') {
-    const color = event.status === 'fallback_activated' ? 'text-amber-400 border-amber-900/50 bg-amber-950/20'
-      : event.status === 'agent_start' ? 'text-sky-400 border-sky-900/50 bg-sky-950/20'
-      : 'text-gray-500 border-gray-800'
-    return (
-      <div className={`${base} ${color}`}>
-        <span className="font-mono">[SYSTEM]</span> {event.message}
-      </div>
-    )
-  }
-
-  if (event.type === 'observation') {
-    const color = event.severity === 'critical' ? 'text-red-300 border-red-900/50 bg-red-950/20'
-      : event.severity === 'warning' ? 'text-amber-300 border-amber-900/50 bg-amber-950/20'
-      : 'text-gray-300 border-gray-800'
-    return (
-      <div className={`${base} ${color}`}>
-        <span className="font-semibold">{event.vessel_name}</span>
-        <span className="mx-1.5 text-gray-600">·</span>
-        {event.message}
-        {event.data.delay_hours != null && (
-          <span className="ml-2 font-mono text-amber-400">+{event.data.delay_hours}h</span>
-        )}
-      </div>
-    )
-  }
-
-  if (event.type === 'tool_call') {
-    return (
-      <div className={`${base} border-indigo-900/50 bg-indigo-950/20 text-indigo-300`}>
-        <span className="font-mono text-indigo-500">[TOOL]</span>
-        <span className="ml-2 font-semibold">{event.tool_name}</span>
-        <span className="ml-2 text-indigo-600 font-mono text-[10px]">
-          {JSON.stringify(event.arguments).slice(0, 60)}…
-        </span>
-      </div>
-    )
-  }
-
-  if (event.type === 'tool_result') {
-    return (
-      <div className={`${base} border-indigo-900/30 bg-indigo-950/10 text-indigo-400`}>
-        <span className="font-mono text-indigo-600">[RESULT]</span>
-        <span className="ml-2">{event.tool_name}</span>
-        <span className={`ml-2 text-[10px] font-mono ${event.success ? 'text-emerald-600' : 'text-red-500'}`}>
-          {event.success ? '✓' : '✗'} {event.duration_ms}ms
-        </span>
-      </div>
-    )
-  }
-
-  if (event.type === 'explanation') {
-    return (
-      <div className={`${base} border-gray-700 bg-gray-900/60 text-gray-300 leading-relaxed`}>
-        {event.text}
-      </div>
-    )
-  }
-
-  if (event.type === 'decision') {
-    const urgencyColor = event.urgency === 'critical' ? 'bg-red-500'
-      : event.urgency === 'high' ? 'bg-orange-500'
-      : event.urgency === 'medium' ? 'bg-amber-500'
-      : 'bg-emerald-500'
-    const confidencePct = Math.round(event.confidence * 100)
-    return (
-      <div className={`${base} border-emerald-900/50 bg-emerald-950/20 space-y-2`}>
-        <div className="flex items-center gap-2">
-          <span className={`w-2 h-2 rounded-full ${urgencyColor}`} />
-          <span className="font-semibold text-emerald-300">{event.recommended_action}</span>
-          <span className="ml-auto text-xs text-gray-500">{event.vessel_name}</span>
-        </div>
-        {/* Confidence bar */}
-        <div className="flex items-center gap-2">
-          <div className="flex-1 h-1.5 bg-gray-800 rounded-full overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all ${confidencePct >= 80 ? 'bg-emerald-500' : confidencePct >= 60 ? 'bg-amber-500' : 'bg-red-500'}`}
-              style={{ width: `${confidencePct}%` }}
-            />
-          </div>
-          <span className="text-xs font-mono text-gray-400">{confidencePct}%</span>
-        </div>
-        {/* Factors */}
-        <div className="flex flex-wrap gap-1">
-          {event.factors_considered.map(f => (
-            <span key={f} className="text-[10px] px-1.5 py-0.5 rounded bg-gray-800 text-gray-400">{f}</span>
-          ))}
-        </div>
-        {/* Alternatives */}
-        {event.alternatives.length > 0 && (
-          <div className="text-[11px] text-gray-500 pl-2 border-l-2 border-gray-800 space-y-1">
-            <div className="text-[10px] text-gray-600 font-semibold uppercase tracking-wider mb-0.5">Alternatives considered</div>
-            {event.alternatives.map((alt, i) => (
-              <div key={i} className="flex items-start gap-1.5">
-                <span className="text-gray-600 font-mono mt-0.5">{Math.round(alt.confidence * 100)}%</span>
-                <div>
-                  <span className="text-gray-400">{alt.action}</span>
-                  <span className="text-gray-600 ml-1">— {alt.tradeoff}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-        {/* Counterfactual button */}
-        <button
-          onClick={() => onCounterfactual(event.shipment_id, 48)}
-          className="text-[10px] px-2 py-1 rounded border border-red-900/40 text-red-400 hover:bg-red-950/30 transition-colors w-fit"
-        >
-          What if we don't act? →
-        </button>
-      </div>
-    )
-  }
-
-  if (event.type === 'counterfactual') {
-    const p = event.projected_outcomes
-    return (
-      <div className={`${base} border-red-900/50 bg-red-950/20 space-y-1.5 animate-slide-in`}>
-        <div className="text-[11px] font-bold text-red-400 uppercase tracking-wider">Cost of Inaction</div>
-        <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-xs">
-          <span className="text-gray-500">Added delay</span>
-          <span className="text-red-300 font-mono">+{p.additional_delay_hours}h</span>
-          <span className="text-gray-500">Penalty</span>
-          <span className="text-red-300 font-mono">${p.estimated_penalty_usd.toLocaleString()}</span>
-          <span className="text-gray-500">SLA breaches</span>
-          <span className="text-red-300 font-mono">{p.sla_breaches}</span>
-          <span className="text-gray-500">Affected vessels</span>
-          <span className="text-red-300 font-mono">{p.cascade_affected_shipments}</span>
-        </div>
-        {p.cargo_at_risk.length > 0 && (
-          <div className="text-[10px] text-red-600 space-y-0.5">
-            {p.cargo_at_risk.map((c, i) => (
-              <div key={i}>⚠ {c.cargo_type}: {c.risk}</div>
-            ))}
-          </div>
-        )}
-      </div>
-    )
-  }
-
-  return null
-}
-
-// ── Main App ──────────────────────────────────────────────────────────────────
+// ── App ───────────────────────────────────────────────────────────────────────
 
 export default function App() {
   const { events, vessels, status, isAgentRunning } = useAgentSocket()
@@ -261,9 +79,7 @@ export default function App() {
   async function triggerScenario(scenarioId: string) {
     const port = SCENARIO_PORT[scenarioId]
     setHighlightedPort(port || undefined)
-    // Clear port highlight after 30s (agent session max)
     if (port) setTimeout(() => setHighlightedPort(undefined), 30_000)
-
     await fetch('http://localhost:8000/events/trigger', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -274,7 +90,7 @@ export default function App() {
   return (
     <div className="h-screen w-screen bg-gray-950 text-gray-100 flex flex-col overflow-hidden select-none">
 
-      {/* ── Header ── */}
+      {/* Header */}
       <header className="h-11 bg-gray-900 border-b border-gray-800 flex items-center px-4 gap-4 shrink-0 z-10">
         <div className="flex items-center gap-2">
           <Activity size={16} className="text-emerald-400" />
@@ -286,9 +102,7 @@ export default function App() {
         <div className="h-4 w-px bg-gray-700" />
 
         <div className="flex items-center gap-4 text-xs text-gray-400">
-          <span>
-            <span className="text-gray-200 font-semibold">{activeVessels}</span> vessels
-          </span>
+          <span><span className="text-gray-200 font-semibold">{activeVessels}</span> vessels</span>
           {atRisk > 0 ? (
             <span className="flex items-center gap-1 text-amber-400">
               <AlertTriangle size={11} />
@@ -310,36 +124,20 @@ export default function App() {
         </div>
       </header>
 
-      {/* ── Main panels ── */}
+      {/* Main panels */}
       <div className="flex flex-1 min-h-0">
-
-        {/* Map panel */}
         <div className="flex-1 relative min-w-0">
           <MapView vessels={vessels} highlightedPort={highlightedPort} />
         </div>
 
-        {/* Log panel */}
-        <div className="w-[440px] border-l border-gray-800 bg-gray-950 flex flex-col shrink-0">
-          <div className="h-10 border-b border-gray-800 flex items-center px-4 gap-2 shrink-0">
-            <span className="text-[11px] font-bold text-gray-500 tracking-widest uppercase">Agent Log</span>
-            <span className="ml-auto text-[10px] text-gray-700">{events.length} events</span>
-          </div>
-
-          <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
-            {events.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full gap-2 text-gray-700">
-                <span className="w-2 h-2 rounded-full bg-emerald-800 animate-pulse" />
-                <p className="text-xs">Monitoring {activeVessels} vessels · System nominal</p>
-                <p className="text-[10px] text-gray-800">Trigger a scenario to begin</p>
-              </div>
-            ) : (
-              events.map(event => <EventRow key={event.id} event={event} onCounterfactual={triggerCounterfactual} />)
-            )}
-          </div>
-        </div>
+        <LogPanel
+          events={events}
+          activeVessels={activeVessels}
+          onCounterfactual={triggerCounterfactual}
+        />
       </div>
 
-      {/* ── Scenario triggers ── */}
+      {/* Scenario triggers */}
       <div className="h-14 bg-gray-900 border-t border-gray-800 flex items-center gap-2.5 px-4 shrink-0">
         <span className="text-[10px] font-bold text-gray-600 tracking-widest uppercase mr-1">Simulate</span>
         {SCENARIOS.map(s => (
@@ -347,12 +145,8 @@ export default function App() {
             key={s.id}
             onClick={() => triggerScenario(s.id)}
             disabled={isAgentRunning}
-            className={`
-              px-3 py-1.5 rounded border text-[11px] font-semibold transition-all
-              disabled:opacity-40 disabled:cursor-not-allowed
-              ${SCENARIO_COLORS[s.color]}
-            `}
             title={s.description}
+            className={`px-3 py-1.5 rounded border text-[11px] font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed ${SCENARIO_COLORS[s.color]}`}
           >
             {isAgentRunning
               ? <span className="flex items-center gap-1.5"><Loader2 size={10} className="animate-spin" />{s.label}</span>

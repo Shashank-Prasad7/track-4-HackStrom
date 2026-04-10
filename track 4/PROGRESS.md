@@ -81,7 +81,33 @@
 - [ ] Log panel shows: ObservationCard × 3, ToolCallRow, ToolResultRow, ExplanationBlock, DecisionCard × 3
 - [ ] DecisionCard shows confidence bar, alternatives with %, "What if we don't act?" button
 - [ ] Click "What if we don't act?" on a DecisionCard → red panel appears in log
-## H6–H8 · First full demo run · Pending
+## H6–H8 · First full demo run ✅
+
+### Frontend
+- `components/LogPanel.tsx` — extracted full component:
+  - Auto-scroll to bottom on every new event (smooth)
+  - Session dividers between scenario runs
+  - Proper typed renderers for all 8 event types:
+    - HeartbeatRow (compact, pulse animation, turns amber on brewing risks)
+    - SystemRow (styled by status: sky/amber/gray)
+    - ObservationCard (red/amber/gray by severity, with delay hours)
+    - ToolCallRow (indigo, truncated argument preview)
+    - ToolResultRow (✓/✗ + duration_ms)
+    - ExplanationBlock (gray prose card)
+    - DecisionCard (full: urgency dot, action badge, confidence bar, factors, alternatives with %, counterfactual button, cost estimates)
+    - CounterfactualCard (red grid: delay, penalty, SLA breaches, cascade vessels)
+- `App.tsx` — cleaned: EventRow removed, LogPanel imported, ~100 lines shorter
+
+### Planning
+- `DEMO_SCRIPT.md` — full 3-minute judge walkthrough with timing marks, Q&A prep, pre-demo checklist
+
+### Smoke tests (run these now)
+- [ ] All 4 scenarios trigger without errors
+- [ ] Log panel auto-scrolls on each new event
+- [ ] Session dividers appear between runs
+- [ ] DecisionCard: confidence bar fills, alternatives show %, counterfactual button works
+- [ ] CounterfactualCard: red panel with penalty numbers
+- [ ] `npm run build` exits 0 (no TypeScript errors)
 ## H8–H10 · Counterfactual + map animations · Pending
 ## H10–H14 · Frontend polish sprint · Pending
 ## H14–H16 · Demo rehearsal · Pending
