@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Activity, AlertTriangle, Wifi, WifiOff, Loader2, Clock, AlertOctagon } from 'lucide-react'
+import { AreaChart, Area, ResponsiveContainer } from 'recharts'
 import { useAgentSocket } from './hooks/useAgentSocket'
 import { MapView } from './components/MapView'
 import { LogPanel } from './components/LogPanel'
@@ -80,8 +81,14 @@ export default function App() {
   const [activeScenarioId,  setActiveScenarioId]  = useState<string | undefined>()
 
   const latestHeartbeat = [...events].reverse().find(e => e.type === 'heartbeat') as HeartbeatEvent | undefined
-  const atRisk       = latestHeartbeat?.at_risk_count ?? 0
+  const atRisk        = latestHeartbeat?.at_risk_count ?? 0
   const activeVessels = latestHeartbeat?.active_shipments ?? 11
+
+  // Sparkline: last 24 heartbeat at_risk_count values
+  const sparkData = events
+    .filter(e => e.type === 'heartbeat')
+    .slice(-24)
+    .map(e => ({ v: (e as HeartbeatEvent).at_risk_count }))
 
   function handleClear() {
     clearEvents()
@@ -162,6 +169,25 @@ export default function App() {
             </span>
           )}
         </div>
+
+        {/* Risk sparkline — live at_risk_count over last 24 heartbeats */}
+        {sparkData.length > 2 && (
+          <div className="w-28 h-7 ml-2 opacity-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={sparkData} margin={{ top: 2, right: 0, bottom: 2, left: 0 }}>
+                <Area
+                  type="monotone"
+                  dataKey="v"
+                  stroke={atRisk > 0 ? '#f59e0b' : '#10b981'}
+                  fill={atRisk > 0 ? '#f59e0b22' : '#10b98122'}
+                  strokeWidth={1.5}
+                  dot={false}
+                  isAnimationActive={false}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        )}
 
         <div className="ml-auto">
           <StatusBadge status={status} />
